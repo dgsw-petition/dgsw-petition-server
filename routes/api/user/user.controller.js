@@ -65,3 +65,37 @@ exports.signup=async (req,res)=>{
         return res.sendStatus(500).end()
     }
 }
+exports.signin=async (req,res)=>{
+    const{
+        id,
+        password
+    }=req.body
+    try{
+        let User=await user_student.findOneById(id)
+        if(User===null){
+            let result={
+                "code":105,
+                "desc":"login error"
+            }
+            return res.status(200).json(result);
+        }
+        if(!await User.verifyPassWord(password)){
+            let result={
+                "code":105,
+                "desc":"login error"
+            }
+            return res.status(200).json(result);
+        }
+        let token=await User.generateAccessToken();
+        let result={
+            "code":102,
+            "desc":"login success",
+            "token":token
+        }
+        return res.status(200).json(result)
+    }catch(error){
+        console.log(error);
+        console.log(error.message);
+        return res.sendStatus(500).end()
+    }
+}
