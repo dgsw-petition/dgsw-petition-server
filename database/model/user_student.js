@@ -1,6 +1,7 @@
 const mongoose=require('mongoose');
 const crypto=require('crypto');
 const {secret}=require('../../config.json');
+const jwt=require('jsonwebtoken')
 const Schema=mongoose.Schema;
 
 let user_student=Schema({
@@ -32,6 +33,40 @@ user_student.statics.signup=function(code,id,password,name,snum,grade,school_cla
         school_class,
         num
     }).save()
+}
+user_student.statics.findOneByCode=function(code){
+    return this.findOne({code}).exec();
+}
+user_student.statics.findOneById=function(id){
+    return this.findOne({id}).exec();
+}
+
+user_student.methods.verifyPassWord=function(password){
+    const encryptoPassWord=crypto.createHmac('sha1',secret)
+    .update(password)
+    .digest('base64')
+
+    return this.password==encryptoPassWord
+}
+user_student.methods.generateAccessToken=function(){
+    return new Promise((resolve,reject)=>{
+        jwt.sign({
+            "code":this.code,
+            "name":this.name,
+            "snum":this.snum,
+            "grade":this.grade,
+            "class":this.school_class,
+            "num":this.num
+        },
+        secret,{
+            issuer:"dgsw.hs.kr",
+            subject:"user-access-token",
+            expiresIn: 60 * 30
+        },(err, token) => {
+            if (err) reject(err)
+            resolve(token)
+        })
+    })
 }
 
 module.exports=mongoose.model('user_student',user_student)
